@@ -5,15 +5,6 @@ import socket
 
 '''
 
-def receive_message(data):
-    # クライアントからのデータを1バイト受信します。ここで、1バイトはユーザー名の長さを表す値です。
-    # この値を整数に変換するために [0] を使用してバイト列の最初の要素を取得します
-    usernamelen = data.recvfrom(1)[0]
-    # ユーザ-名を名を受信
-    username = data.recvfrom(usernamelen).decode()
-    # メッセージを受信
-    message = data.recvfrom(4096).decode()
-
 class UDPServer:
     def __init__(self, server_address, server_port):
         self.server_address = server_address
