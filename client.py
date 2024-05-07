@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+import sys
 
 class UDPClient:
     def __init__(self, server_address, server_port):
@@ -9,6 +10,7 @@ class UDPClient:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.client_address = ''
         self.client_port = self.find_free_port()
+        self.client_info = str(self.client_address)+ "," + str(self.client_port)
         self.sock.bind((self.client_address, self.client_port))
         self.username = ''
     
@@ -41,15 +43,22 @@ class UDPClient:
             usernamelen = len(self.username).to_bytes(1, byteorder='big')# UTF-8 エンコーディングを使用して変換 (指定されたバイト数（ここでは1バイト）のバイト列に変換します)
             data = usernamelen + self.username.encode() + message.encode() # ユーザー名とメッセージを結合して送信
             # サーバへのデータ送信
-            self.sock.sendto(data, (server_address, server_port))
+            self.sock.sendto(data, (self.server_address, self.server_port))
             time.sleep(0.1)
 
     # 他ユーザのメッセージの受信処理
     def receive_message(self):
         while True:
             rcv_data = self.sock.recvfrom(4096)[0].decode("utf-8")
-            print(rcv_data)
-             
+
+            if (rcv_data == "Timeout!"): # タイムアウト処理
+                print(rcv_data)
+                self.sock.close()
+                sys.exit()
+            else:
+                print(rcv_data)
+
+
     # 空きポートの割り当て
     def find_free_port(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -71,6 +80,7 @@ class UDPClient:
 
 
 if __name__ == "__main__":
+
     server_address = '0.0.0.0'
     server_port = 9001
     client = UDPClient(server_address, server_port)
