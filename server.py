@@ -30,6 +30,7 @@ class UDPServer:
                 print("新しいユーザーです -> ", name)
 
             else:
+                self.clientsmap[client_address][1] = time.time() # クライアントの最終送信時刻を更新
                 usernamelen = data[0] # 最初のバイトがユーザー名の長さを表す
                 username = data[1:usernamelen + 1].decode() # ユーザー名を取得
                 message = data[usernamelen + 1:].decode() # メッセージを取得
@@ -44,6 +45,8 @@ class UDPServer:
     # 各クライアントの最後のメッセ時送信時刻を追跡
     def send_time_tracking(self):
         while True:
+            time.sleep(60)# 1分単位で追跡
+            print("スリープ解除")
             try:
                 for address, value in self.clientsmap.items():
                     send_time = value[1]
