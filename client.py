@@ -44,6 +44,136 @@ class UDPClient:
             self.sock.sendto(data, (server_address, server_port))
             time.sleep(0.1)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     # 他ユーザのメッセージの受信処理
     def receive_message(self):
         while True:
@@ -69,6 +199,17 @@ class UDPClient:
         thread_send.join()
         thread_receive.join()
 
+class TCPClient:
+    def __init__(self, server_address, server_port):
+        self.server_address = server_address
+        self.server_port = server_port
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((self.server_address, self.server_port))
+
+    
+    # チャットルームプロトコルの形式で受け取る
+    def receive_message(self):
+        room_name_size = ''
 
 if __name__ == "__main__":
     server_address = '0.0.0.0'
