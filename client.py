@@ -11,6 +11,7 @@ class UDPClient:
         self.client_port = self.find_free_port()
         self.sock.bind((self.client_address, self.client_port))
         self.username = ''
+        self.rooms = {}
     
     # サーバに接続後，最初にusernameを入力
     def input_username(self):
@@ -44,137 +45,7 @@ class UDPClient:
             self.sock.sendto(data, (server_address, server_port))
             time.sleep(0.1)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # 他ユーザのメッセージの受信処理
+         # 他ユーザのメッセージの受信処理
     def receive_message(self):
         while True:
             rcv_data = self.sock.recvfrom(4096)[0].decode("utf-8")
@@ -187,6 +58,10 @@ class UDPClient:
         port = sock.getsockname()[1] # ソケットがバインドされているアドレス情報を取得(port番号)
         sock.close()
         return port
+
+    # トークンをセットする
+    def set_token(self, room_name, token):
+        self.rooms[room_name] = token
 
     def start(self):
         self.input_username()
@@ -205,14 +80,198 @@ class TCPClient:
         self.server_port = server_port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.server_address, self.server_port))
-
     
-    # チャットルームプロトコルの形式で受け取る
+    def start(self):
+        self.send_message()
+        self.receive_message()
+
+    # オペレーションコードを入力する
+    def input_op_code(self):
+        op_code = input('1または2を入力してください 1: ルームを作成  2: ルームに参加')
+
+        # ルーム作成が１
+        if op_code == '1':
+            return 1
+        
+        # ルーム参加が２
+        elif op_code == '2':
+            return 2
+        
+        else:
+            print('1, 2以外が入力されました。')
+            self.input_op_code()
+
+
+    def input_roomname(self):
+        ROOMNAME_MAX_LEN = 255
+        roomname = input('チャットルーム名を入力してください')
+        roomname_bytes = roomname.encode('utf-8')
+
+        if len(roomname_bytes) > ROOMNAME_MAX_LEN:
+            print('ルーム名は {ROOMNAME_MAX_LEN} バイト以下にしてください')
+            self.input_roomname()
+            return
+        
+        return roomname
+        
+
+    def send_message(self):
+        header = self.make_header()
+        self.sock.send(header)
+        # print(header.decode('utf-8'))
+
+
+    def make_header(self):
+        roomname_byte = self.input_roomname().encode()
+        roomname_size_byte = len(roomname_byte).to_bytes(1, "big")
+        operation_byte = self.input_op_code().to_bytes(1, "big")
+        state = 1
+        state_byte = state.to_bytes(1, "big")
+        return roomname_size_byte + operation_byte + state_byte + roomname_byte
+
     def receive_message(self):
-        room_name_size = ''
+        data = self.sock.recv(1024)
+        room_name_len = int.from_bytes(data[:1])
+        room_name = data[1:room_name_len + 1]
+        token = data[room_name_len + 1:]
+        # UDPクライアントにトークンをセットする
+        udp_client.set_token(room_name, token)
+        print(udp_client.rooms)
 
 if __name__ == "__main__":
     server_address = '0.0.0.0'
     server_port = 9001
-    client = UDPClient(server_address, server_port)
-    client.start()
+    tcp_client = TCPClient(server_address, server_port)
+    tcp_client.start()
+    udp_client = UDPClient(server_address, server_port)
+    udp_client.start()   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
