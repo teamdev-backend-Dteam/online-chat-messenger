@@ -3,6 +3,7 @@ import threading
 import time
 import sys
 
+
 class UDPClient:
     def __init__(self, server_address, server_port):
         self.server_address = server_address
@@ -83,6 +84,7 @@ class UDPClient:
         thread_receive.start()
         thread_send.join()
         thread_receive.join()
+
 
 class TCPClient:
     def __init__(self, server_address, server_port):
