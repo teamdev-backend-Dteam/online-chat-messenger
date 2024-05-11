@@ -50,7 +50,7 @@ class TCPServer:
         self.server_port = server_port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((self.server_address, self.server_port))
-    
+        print('tcpサーバー起動しました')
     def start(self):
         self.handle_message()
 
@@ -138,17 +138,17 @@ class Chatroom:
 
 if __name__ == "__main__":
     server_address = '0.0.0.0'
-    server_port = 9001
-    print('starting up on port {}'.format(server_port))
-    udp_server = UDPServer(server_address, server_port)
-    tcp_server = TCPServer(server_address, server_port)
+    udp_server_port = 9001
+    tcp_server_port = 9002
+    print('starting up on port {}'.format(udp_server_port))
+    udp_server = UDPServer(server_address, udp_server_port)
+    tcp_server = TCPServer(server_address, tcp_server_port)
     chatroom = Chatroom()
-
     # UDP用
-    thread_udp = threading.Thread(udp_server.start())
+    thread_udp = threading.Thread(target=udp_server.start)
     thread_udp.start()
     # TCP接続用
-    thread_tcp = threading.Thread(tcp_server.start())
+    thread_tcp = threading.Thread(target=tcp_server.start)
     thread_tcp.start()
     thread_udp.join()
     thread_tcp.join()

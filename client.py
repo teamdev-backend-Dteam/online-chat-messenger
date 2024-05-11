@@ -42,7 +42,7 @@ class UDPClient:
             usernamelen = len(self.username).to_bytes(1, byteorder='big')# UTF-8 エンコーディングを使用して変換 (指定されたバイト数（ここでは1バイト）のバイト列に変換します)
             data = usernamelen + self.username.encode() + message.encode() # ユーザー名とメッセージを結合して送信
             # サーバへのデータ送信
-            self.sock.sendto(data, (server_address, server_port))
+            self.sock.sendto(data, (server_address, udp_server_port))
             time.sleep(0.1)
 
          # 他ユーザのメッセージの受信処理
@@ -136,14 +136,14 @@ class TCPClient:
         token = data[room_name_len + 1:]
         # UDPクライアントにトークンをセットする
         udp_client.set_token(room_name, token)
-        print(udp_client.rooms)
 
 if __name__ == "__main__":
     server_address = '0.0.0.0'
-    server_port = 9001
-    tcp_client = TCPClient(server_address, server_port)
+    udp_server_port = 9001
+    tcp_server_port = 9002
+    tcp_client = TCPClient(server_address, tcp_server_port)
+    udp_client = UDPClient(server_address, udp_server_port)
     tcp_client.start()
-    udp_client = UDPClient(server_address, server_port)
     udp_client.start()   
 
 
