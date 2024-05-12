@@ -14,7 +14,8 @@ class UDPClient:
         self.client_info = str(self.client_address)+ "," + str(self.client_port)
         self.sock.bind((self.client_address, self.client_port))
         self.username = ''
-        self.rooms = {}
+        self.room_name = ''
+        self.token = ''
     
     # サーバに接続後，最初にusernameを入力
     def input_username(self):
@@ -34,18 +35,33 @@ class UDPClient:
                 self.input_username()
             
             # 問題がなければサーバに送信
-            self.sock.sendto(self.username.encode('utf-8'), (self.server_address, self.server_port))
+            # self.sock.sendto(self.username.encode('utf-8'), (self.server_address, self.server_port))
     
     # username入力後の処理
     def send_message(self):
         while True:
-            message = input("")
+
+            ''' サーバー側のデータ取得
+            room_name_size = data[0]　ルーム名のBYTE長さ
+            token_size = data[1] TOKENのサイズ
+            room_name = data[2:2 + room_name_size].decode() 実際のルーム名_BYTE
+            token = data[2 + room_name_size:2 + room_name_size + token_size] 実際のトークンデータ
+            message = data[2 + room_name_size + token_size:].decode() メッセージの中身
+            '''
+            room_name_size = len(self.room_name).to_bytes(1, byteorder="big")
+            token_size = len(self.token).to_bytes(1, byteorder="big")
+            room_name = self.room_name
+            token = self.token
+            message = input("").encode('utf-8')
             print("\033[1A\033[1A") # "\033[1A": カーソルを現在の行の先頭に移動 -> これにより、ターミナル上の出力を更新または消去
             #print("You: " + message)
-            usernamelen = len(self.username).to_bytes(1, byteorder='big')# UTF-8 エンコーディングを使用して変換 (指定されたバイト数（ここでは1バイト）のバイト列に変換します)
-            data = usernamelen + self.username.encode() + message.encode() # ユーザー名とメッセージを結合して送信
+            #usernamelen = len(self.username).to_bytes(1, byteorder='big')# UTF-8 エンコーディングを使用して変換 (指定されたバイト数（ここでは1バイト）のバイト列に変換します)
+            #data = usernamelen + self.username.encode() + message.encode() # ユーザー名とメッセージを結合して送信
             # サーバへのデータ送信
+            data = room_name_size + token_size + room_name + token + message
             self.sock.sendto(data, (self.server_address, self.server_port))
+
+
 
             time.sleep(0.1)
 
@@ -71,8 +87,10 @@ class UDPClient:
         return port
 
     # トークンをセットする
-    def set_token(self, room_name, token):
-        self.rooms[room_name] = token
+    def set_token_room_name(self, room_name, token):
+        self.token = token
+        self.room_name = room_name
+
 
     def start(self):
         self.input_username()
@@ -146,8 +164,8 @@ class TCPClient:
         room_name_len = int.from_bytes(data[:1])
         room_name = data[1:room_name_len + 1]
         token = data[room_name_len + 1:]
-        # UDPクライアントにトークンをセットする
-        udp_client.set_token(room_name, token)
+        # UDPクライアントにルーム名とトークンをセットする
+        udp_client.set_token_room_name(room_name, token)
 
 if __name__ == "__main__":
 
