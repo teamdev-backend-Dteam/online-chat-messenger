@@ -30,8 +30,8 @@ class UDPServer:
             room_name = data[2:2 + room_name_size].decode()
             token = data[2 + room_name_size:2 + room_name_size + token_size]
             message = data[2 + room_name_size + token_size:].decode()
-
-            if self.is_valid_token(room_name, client_address, token):
+            address = client_address[0] # アドレスのみを取得
+            if self.is_valid_token(room_name, address, token):
                 print(f'Message from {client_address} in room {room_name}: {message}')
                 self.relay_message(room_name, message)
             else:
@@ -76,7 +76,7 @@ class UDPServer:
 
     # トークンの有効性を確認
     def is_valid_token(self, room_name, client_address, token):
-        return (room_name in self.clientsmap and client_address in self.clientsmap[room_name] and self.clientsmap[room_name][client_address] == token)
+        return (room_name in chatroom.rooms and client_address in chatroom.rooms[room_name] and chatroom.rooms[room_name][client_address] == token)
 
     # アクティブでないクライアントの削除
     def remove_inactive_clients(self):
