@@ -13,7 +13,6 @@ class UDPServer:
     def __init__(self, server_address, server_port):
         self.server_address = server_address
         self.server_port = server_port
-        # self.clients = []
         self.clientsmap = {}
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((self.server_address, self.server_port))
@@ -26,28 +25,39 @@ class UDPServer:
         while True:
 
             data, client_address = self.sock.recvfrom(4096) # 最大4096byteのデータを受信
-            # 新しいクライアントからの受信 -> clientsリストにアドレスを保存
-            if (not client_address in self.clientsmap):
-                name = data.decode('utf-8')
-                # print("新しいユーザーです -> ", name)
-                # self.clients.append(client_address)
-                self.clientsmap.update({client_address : [name, time.time()]})
-                #print(client_address)
-                #print("新しいユーザーです -> ", self.clientsmap[client_address], time.ctime())
-                print("新しいユーザーです -> ", name)
+            room_name_size = data[0]
+            token_size = data[1]
+            room_name = data[2:2 + room_name_size].decode()
+            token = data[2 + room_name_size:2 + room_name_size + token_size]
+            message = data[2 + room_name_size + token_size:].decode()
 
+            if self.is_valid_token(room_name, client_address, token):
+                print(f'Message from {client_address} in room {room_name}: {message}')
+                self.relay_message(room_name, message)
             else:
-                self.clientsmap[client_address][1] = time.time() # クライアントの最終送信時刻を更新
-                usernamelen = data[0] # 最初のバイトがユーザー名の長さを表す
-                username = data[1:usernamelen + 1].decode() # ユーザー名を取得
-                message = data[usernamelen + 1:].decode() # メッセージを取得
-                print(f"{username}: {message}")
-                self.relay_message(username + ": " + message) # 接続ユーザ全員に送信(送信元のユーザも含む)
+                print(f'Invalid token from {client_address}')
+
+
+            # 新しいクライアントからの受信 -> clientsリストにアドレスを保存
+            # if (not client_address in self.clientsmap):
+            #     name = data.decode('utf-8')
+            #     self.clientsmap.update({client_address : [name, time.time()]})
+            #     print("新しいユーザーです -> ", name)
+            #     print(client_address)
+            #     print("新しいユーザーです -> ", self.clientsmap[client_address], time.ctime())
+            # else:
+            #     self.clientsmap[client_address][1] = time.time() # クライアントの最終送信時刻を更新
+            #     usernamelen = data[0] # 最初のバイトがユーザー名の長さを表す
+            #     username = data[1:usernamelen + 1].decode() # ユーザー名を取得
+            #     message = data[usernamelen + 1:].decode() # メッセージを取得
+            #     print(f"{username}: {message}")
+            #     self.relay_message(username + ": " + message) # 接続ユーザ全員に送信(送信元のユーザも含む)
     
     # リレーシステム
-    def relay_message(self, message):
-        for client_address in self.clientsmap.keys():
-            self.sock.sendto(message.encode(), client_address)
+    def relay_message(self, room_name, message):
+        if room_name in self.clientsmap:
+            for client_address, token in self.clientsmap[room_name].items():
+                self.sock.sendto(message.encode(), client_address)
     
     # 各クライアントの最後のメッセ時送信時刻を追跡
     def send_time_tracking(self):
@@ -64,6 +74,22 @@ class UDPServer:
             except Exception as e: # ハッシュマップの中身がない時のエラー処理
                 pass
 
+    # トークンの有効性を確認
+    def is_valid_token(self, room_name, client_address, token):
+        return (room_name in self.clientsmap and client_address in self.clientsmap[room_name] and self.clientsmap[room_name][client_address] == token)
+
+    # アクティブでないクライアントの削除
+    def remove_inactive_clients(self):
+        while True:
+            time.sleep(60)
+            current_time = time.time()
+            for room in list(self.clientsmap):
+                for client in list(self.clientsmap[room]):
+                    if current_time - self.clientsmap[room][client][1] > 300:
+                        del self.clientsmap[room][client]
+                        self.sock.sendto(b"Timeout!", client)
+                        print(f'{client} in room {room} has been disconnected due to inactivity.')
+
     def start(self):
         thread_main = threading.Thread(target = self.handle_message)
         thread_tracking = threading.Thread(target = self.send_time_tracking)
@@ -72,13 +98,14 @@ class UDPServer:
         thread_main.join()
         thread_tracking.join()
 
+
 class TCPServer:
     def __init__(self, server_address, server_port):
         self.server_address = server_address
         self.server_port = server_port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((self.server_address, self.server_port))
-        print('tcpサーバー起動しました')
+        print('TCPサーバー起動しました')
     def start(self):
         self.handle_message()
 
@@ -163,6 +190,7 @@ class Chatroom:
         if address in self.rooms[room_name]:
             return True
         return False
+
 
 if __name__ == "__main__":
     server_address = '0.0.0.0'
