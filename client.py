@@ -41,13 +41,6 @@ class UDPClient:
     def send_message(self):
         while True:
 
-            ''' サーバー側のデータ取得
-            room_name_size = data[0]　ルーム名のBYTE長さ
-            token_size = data[1] TOKENのサイズ
-            room_name = data[2:2 + room_name_size].decode() 実際のルーム名_BYTE
-            token = data[2 + room_name_size:2 + room_name_size + token_size] 実際のトークンデータ
-            message = data[2 + room_name_size + token_size:].decode() メッセージの中身
-            '''
             room_name_size = len(self.room_name).to_bytes(1, byteorder="big")
             token_size = len(self.token).to_bytes(1, byteorder="big")
             room_name = self.room_name
