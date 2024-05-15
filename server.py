@@ -140,17 +140,8 @@ class TCPServer:
             room_name_len = len(room_name_byte).to_bytes(1, "big")
             connection.send(room_name_len + room_name_byte + token)
             connection.close()
-            # クライアントはトークンを使い、UDPを経由してサーバーが管理するチャットルームに接続する
-            '''
-            Chatroomが以下を管理する
-            チャットルームの構成
-            rooms = {
-                ルーム名：[(address, token), ...]
-            }
 
-            serverは送られたデータからどのROOMか判断し、メッセージを転送する
-            '''
-        
+
     def generate_token(self):
         token = secrets.token_bytes()
         return token
